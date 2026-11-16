@@ -1,0 +1,40 @@
+<svg width="78" height="78" viewBox="0 0 78 78" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logo_bg_grad" x1="0" y1="0" x2="78" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0A2540"/>
+      <stop offset="0.65" stop-color="#153E75"/>
+      <stop offset="1" stop-color="#FF6B00"/>
+    </linearGradient>
+    <linearGradient id="bag_grad" x1="28" y1="16" x2="44" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10B981"/>
+      <stop offset="1" stop-color="#059669"/>
+    </linearGradient>
+    <filter id="logo_drop" x="-4" y="-2" width="86" height="86" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- Background Squircle -->
+  <rect width="78" height="78" rx="20" fill="url(#logo_bg_grad)" filter="url(#logo_drop)"/>
+
+  <!-- Shopping Bag inside cart -->
+  <rect x="29" y="21" width="16" height="15" rx="3.5" fill="url(#bag_grad)"/>
+  <path d="M33 21V17C33 15.3431 34.3431 14 36 14H38C39.6569 14 41 15.3431 41 17V21" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+
+  <!-- Shopping Cart Frame -->
+  <path d="M19 25H23.8L28.6 45.5C28.9 46.8 30 47.7 31.3 47.7H52.5C53.8 47.7 54.9 46.8 55.2 45.5L59 29.5H24.8" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Inner Cart Grid Lines -->
+  <path d="M26.5 34H57.5" stroke="#FFE4D6" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.9"/>
+  <path d="M28 40H55" stroke="#FFE4D6" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.9"/>
+  <path d="M35.5 29V46" stroke="#FFE4D6" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.9"/>
+  <path d="M45 29V46" stroke="#FFE4D6" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.9"/>
+
+  <!-- Wheels with Orange Hubs -->
+  <circle cx="33" cy="56" r="4.6" fill="#FFFFFF"/>
+  <circle cx="33" cy="56" r="2.2" fill="#FF6B00"/>
+  <circle cx="50" cy="56" r="4.6" fill="#FFFFFF"/>
+  <circle cx="50" cy="56" r="2.2" fill="#FF6B00"/>
+
+  <!-- Sparkling Star Badge -->
+  <path d="M59 15L60.5 19L64.5 20.5L60.5 22L59 26L57.5 22L53.5 20.5L57.5 19L59 15Z" fill="#FBBF24"/>
+</svg>
