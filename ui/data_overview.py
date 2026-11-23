@@ -42,7 +42,7 @@ def render_data_overview():
         render_kpi_card(
             title="Total Records",
             value=f"{len(raw_df):,}",
-            subtitle="Rows in Superstore dataset",
+            subtitle="Rows in E-Commerce dataset",
             icon="🔢",
             glow_color="blue"
         )
@@ -111,7 +111,9 @@ def render_data_overview():
 
     with col_ctrl2:
         all_cols = list(raw_df.columns)
-        default_cols = ["Order ID", "Order Date", "Customer Name", "Segment", "Region", "Category", "Sub-Category", "Sales", "Profit", "Discount"]
+        default_cols = ["Order_ID", "Order_Date", "Customer_ID", "Customer_Segment", "Warehouse_Region",
+                        "Product_Category", "Product_Subcategory", "Order_Amount", "Profit_Amount",
+                        "Discount_Percent", "Order_Status", "Review_Rating"]
         selected_columns = st.multiselect(
             "Select Columns to Display",
             options=all_cols,
@@ -131,7 +133,9 @@ def render_data_overview():
 
     # Statistical Distribution Overview
     render_section_title("Numerical Feature Distributions", icon="📊")
-    numeric_cols = ["Sales", "Profit", "Discount", "Quantity", "Profit Margin"]
+    numeric_cols = ["Order_Amount", "Profit_Amount", "Discount_Percent", "Quantity",
+                    "Profit_Margin_Percent", "Review_Rating", "Unit_Price", "Shipping_Cost",
+                    "Tax_Amount", "Customer_Lifetime_Value", "Delivery_Days"]
     available_num = [c for c in numeric_cols if c in clean_df.columns]
 
     stats_df = clean_df[available_num].describe().T

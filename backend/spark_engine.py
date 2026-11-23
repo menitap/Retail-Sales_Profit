@@ -2,6 +2,8 @@
 Backend Engine for Retail Sales and Profitability Analysis Using Apache Spark.
 Manages dataset loading, PySpark session initialization, performance benchmarking,
 and fallback execution when running in socket-restricted or sandboxed environments.
+
+Dataset: data/ecommerce_orders_dataset.csv (2026 E-Commerce Orders Dataset)
 """
 
 import os
@@ -10,7 +12,7 @@ import time
 import pandas as pd
 import numpy as np
 
-DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "sample_superstore.csv")
+DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "ecommerce_orders_dataset.csv")
 
 class SparkBackendEngine:
     _instance = None
@@ -61,23 +63,21 @@ class SparkBackendEngine:
                     break
 
     def _initialize_engine(self):
-        """Attempts to initialize PySpark; if environment prevents socket binding, seamlessly uses high-performance Spark engine."""
+        """Attempts to initialize PySpark; if environment prevents socket binding, seamlessly uses high-performance pandas-based Spark-compatible engine."""
         self._setup_java_env()
         t0 = time.time()
 
         try:
             from pyspark.sql import SparkSession
-            # Attempt local SparkSession initialization
             spark = SparkSession.builder \
-                .appName("RetailSalesAnalysis") \
+                .appName("ECommerceAnalysis") \
                 .master("local[*]") \
                 .config("spark.driver.host", "127.0.0.1") \
                 .config("spark.driver.bindAddress", "127.0.0.1") \
                 .config("spark.ui.enabled", "false") \
                 .config("spark.sql.shuffle.partitions", "4") \
                 .getOrCreate()
-            
-            # Read CSV through PySpark
+
             self.spark_session = spark
             self.spark_df = spark.read.csv(self.data_path, header=True, inferSchema=True)
             self.pandas_df = self.spark_df.toPandas()
@@ -85,21 +85,19 @@ class SparkBackendEngine:
             self.engine_name = f"Apache Spark (PySpark v{spark.version})"
             self.engine_details = f"Master: local[*] | App: {spark.sparkContext.appName} | Partitions: {self.spark_df.rdd.getNumPartitions()}"
         except Exception as e:
-            # Fallback to direct optimized parsing of pre-existing data/sample_superstore.csv
             self.is_pyspark_active = False
             self.engine_name = "Apache Spark Compatibility Engine (PySpark 4.3.0 Standard)"
             self.engine_details = f"Native Spark socket gated in sandbox ({type(e).__name__}). Emulating Spark DataFrame API on pre-existing dataset."
-            self.pandas_df = pd.read_csv(self.data_path, encoding="windows-1252")
+            self.pandas_df = pd.read_csv(self.data_path)
 
         load_duration = time.time() - t0
         self.benchmarks["load_time_sec"] = round(load_duration, 4)
 
-        # Run data cleaning and record metrics
         self._clean_data()
         self._run_benchmarks()
 
     def _clean_data(self):
-        """Cleans dataset and records before/after statistics."""
+        """Cleans the e-commerce dataset and records before/after statistics."""
         t_clean_start = time.time()
         raw_df = self.pandas_df.copy()
 
@@ -110,31 +108,59 @@ class SparkBackendEngine:
 
         cleaned = raw_df.drop_duplicates().copy()
 
-        # Type conversion and formatting
-        cleaned["Order Date"] = pd.to_datetime(cleaned["Order Date"], format="mixed", errors="coerce")
-        cleaned["Ship Date"] = pd.to_datetime(cleaned["Ship Date"], format="mixed", errors="coerce")
-        cleaned["Sales"] = pd.to_numeric(cleaned["Sales"], errors="coerce").fillna(0.0)
-        cleaned["Profit"] = pd.to_numeric(cleaned["Profit"], errors="coerce").fillna(0.0)
-        cleaned["Discount"] = pd.to_numeric(cleaned["Discount"], errors="coerce").fillna(0.0)
-        cleaned["Quantity"] = pd.to_numeric(cleaned["Quantity"], errors="coerce").fillna(1).astype(int)
+        # Parse Order_Date to datetime
+        cleaned["Order_Date"] = pd.to_datetime(cleaned["Order_Date"], format="mixed", errors="coerce")
 
-        # Handle missing postal codes if any
-        if "Postal Code" in cleaned.columns:
-            cleaned["Postal Code"] = cleaned["Postal Code"].fillna("00000").astype(str).str.replace(".0", "", regex=False)
+        # Ensure numeric columns are correct types
+        for col in ["Order_Amount", "Profit_Amount", "Unit_Price", "Discount_Amount",
+                    "Shipping_Cost", "Tax_Amount", "Review_Rating",
+                    "Customer_Lifetime_Value", "Profit_Margin_Percent"]:
+            cleaned[col] = pd.to_numeric(cleaned[col], errors="coerce").fillna(0.0)
 
-        # Trimming strings
+        for col in ["Quantity", "Discount_Percent", "Delivery_Days",
+                    "Year", "Month", "Day", "Quarter", "Customer_Age"]:
+            cleaned[col] = pd.to_numeric(cleaned[col], errors="coerce").fillna(0).astype(int)
+
+        # Trim all string columns
         str_cols = cleaned.select_dtypes(include="object").columns
         for c in str_cols:
             cleaned[c] = cleaned[c].astype(str).str.strip()
 
-        # Add derived analytical columns
-        cleaned["Profit Margin"] = np.where(cleaned["Sales"] > 0, (cleaned["Profit"] / cleaned["Sales"]) * 100, 0.0)
-        cleaned["Order Year"] = cleaned["Order Date"].dt.year
-        cleaned["Order Month"] = cleaned["Order Date"].dt.strftime("%Y-%m")
-        cleaned["Order Month Name"] = cleaned["Order Date"].dt.strftime("%b")
-        cleaned["Order Year-Month"] = cleaned["Order Date"].dt.to_period("M").astype(str)
-        cleaned["Days to Ship"] = (cleaned["Ship Date"] - cleaned["Order Date"]).dt.days
-        cleaned["Is Loss"] = cleaned["Profit"] < 0
+        # Derived analytical columns (for compatibility with analytics layer)
+        # Alias columns to maintain analytics module compatibility
+        cleaned["Sales"] = cleaned["Order_Amount"]
+        cleaned["Profit"] = cleaned["Profit_Amount"]
+        cleaned["Discount"] = cleaned["Discount_Percent"] / 100.0   # fractional (0.0-0.40)
+        cleaned["Category"] = cleaned["Product_Category"]
+        cleaned["Sub-Category"] = cleaned["Product_Subcategory"]
+        cleaned["Region"] = cleaned["Warehouse_Region"]
+        cleaned["Segment"] = cleaned["Customer_Segment"]
+        cleaned["Order ID"] = cleaned["Order_ID"].astype(str)
+        cleaned["Order Year"] = cleaned["Year"]
+        cleaned["Order Month"] = cleaned["Month"]
+
+        # Month name from Month integer
+        month_map = {1:"Jan",2:"Feb",3:"Mar",4:"Apr",5:"May",6:"Jun",
+                     7:"Jul",8:"Aug",9:"Sep",10:"Oct",11:"Nov",12:"Dec"}
+        cleaned["Order Month Name"] = cleaned["Month"].map(month_map)
+
+        # Year-Month string for time series
+        cleaned["Order Year-Month"] = cleaned["Year"].astype(str) + "-" + cleaned["Month"].astype(str).str.zfill(2)
+
+        # Profit Margin (use existing column as source of truth)
+        cleaned["Profit Margin"] = cleaned["Profit_Margin_Percent"]
+
+        # Is Loss flag
+        cleaned["Is Loss"] = cleaned["Profit_Amount"] < 0
+
+        # State alias (use Country as geographic dimension)
+        cleaned["State"] = cleaned["Country"]
+
+        # Ship Mode alias
+        cleaned["Ship Mode"] = cleaned["Shipping_Method"]
+
+        # Days to Ship alias (use Delivery_Days)
+        cleaned["Days to Ship"] = cleaned["Delivery_Days"]
 
         self.cleaned_df = cleaned
         clean_duration = time.time() - t_clean_start
@@ -187,7 +213,7 @@ class SparkBackendEngine:
         self.benchmarks["discount_agg_time_sec"] = round(time.time() - t0, 4)
 
         t0 = time.time()
-        _ = df.groupby(["Order Year", "Order Month"]).agg({"Sales": "sum", "Profit": "sum"})
+        _ = df.groupby(["Order Year", "Order Year-Month"]).agg({"Sales": "sum", "Profit": "sum"})
         self.benchmarks["time_agg_time_sec"] = round(time.time() - t0, 4)
 
         self.benchmarks["total_benchmark_time_sec"] = round(

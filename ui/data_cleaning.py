@@ -99,17 +99,22 @@ def render_data_cleaning():
     render_section_title("Transformation & Feature Engineering Audit Log", icon="⚙️")
     
     transform_log = [
-        {"Target Feature": "Order Date", "Raw Representation": "Object / String (mixed formats)", "Cleaned Spark Type": "DateType / TimestampType", "Transformation Detail": "Parsed via PySpark to_date() with format standardizations"},
-        {"Target Feature": "Ship Date", "Raw Representation": "Object / String (mixed formats)", "Cleaned Spark Type": "DateType / TimestampType", "Transformation Detail": "Parsed via PySpark to_date() for timeline analysis"},
-        {"Target Feature": "Sales", "Raw Representation": "Numeric / String float", "Cleaned Spark Type": "DoubleType", "Transformation Detail": "Enforced non-negative floating point precision"},
-        {"Target Feature": "Profit", "Raw Representation": "Numeric / String float", "Cleaned Spark Type": "DoubleType", "Transformation Detail": "Preserved positive and negative margin values"},
-        {"Target Feature": "Discount", "Raw Representation": "Numeric float (0.0 to 0.8)", "Cleaned Spark Type": "DoubleType", "Transformation Detail": "Validated within 0.0 - 1.0 interval bounds"},
-        {"Target Feature": "Quantity", "Raw Representation": "Numeric integer", "Cleaned Spark Type": "IntegerType", "Transformation Detail": "Cast to 32-bit Integer; default 1 for missing"},
-        {"Target Feature": "Postal Code", "Raw Representation": "Numeric / String", "Cleaned Spark Type": "StringType", "Transformation Detail": "Standardized ZIP format with leading zeroes"},
-        {"Target Feature": "Profit Margin", "Raw Representation": "Derived (New Feature)", "Cleaned Spark Type": "DoubleType", "Transformation Detail": "Computed as (Profit / Sales) * 100"},
-        {"Target Feature": "Order Year-Month", "Raw Representation": "Derived (New Feature)", "Cleaned Spark Type": "StringType", "Transformation Detail": "Formatted as YYYY-MM for time series indexing"},
-        {"Target Feature": "Days to Ship", "Raw Representation": "Derived (New Feature)", "Cleaned Spark Type": "IntegerType", "Transformation Detail": "Calculated date difference (Ship Date - Order Date)"},
-        {"Target Feature": "Is Loss", "Raw Representation": "Derived (New Feature)", "Cleaned Spark Type": "BooleanType", "Transformation Detail": "Flag set to True where Profit < 0"}
+        {"Target Feature": "Order_Date", "Raw Representation": "Object / String (YYYY-MM-DD)", "Cleaned Spark Type": "DateType / TimestampType", "Transformation Detail": "Parsed via PySpark to_date() with format standardizations"},
+        {"Target Feature": "Order_Amount (Sales)", "Raw Representation": "Numeric float", "Cleaned Spark Type": "DoubleType", "Transformation Detail": "Aliased as 'Sales' for analytics layer; enforced non-negative precision"},
+        {"Target Feature": "Profit_Amount (Profit)", "Raw Representation": "Numeric float", "Cleaned Spark Type": "DoubleType", "Transformation Detail": "Aliased as 'Profit'; positive and negative margins preserved"},
+        {"Target Feature": "Discount_Percent (Discount)", "Raw Representation": "Integer 0-40", "Cleaned Spark Type": "IntegerType → DoubleType", "Transformation Detail": "Aliased as 'Discount' in fractional form (Discount_Percent / 100)"},
+        {"Target Feature": "Quantity", "Raw Representation": "Numeric integer", "Cleaned Spark Type": "IntegerType", "Transformation Detail": "Cast to 32-bit Integer; default 0 for missing"},
+        {"Target Feature": "Profit_Margin_Percent (Profit Margin)", "Raw Representation": "Pre-computed DoubleType", "Cleaned Spark Type": "DoubleType", "Transformation Detail": "Aliased as 'Profit Margin'; sourced directly from dataset column"},
+        {"Target Feature": "Warehouse_Region (Region)", "Raw Representation": "StringType (North/East/Central/South/West)", "Cleaned Spark Type": "StringType", "Transformation Detail": "Aliased as 'Region' for regional analysis"},
+        {"Target Feature": "Product_Category (Category)", "Raw Representation": "StringType (8 categories)", "Cleaned Spark Type": "StringType", "Transformation Detail": "Aliased as 'Category' for category analysis"},
+        {"Target Feature": "Product_Subcategory (Sub-Category)", "Raw Representation": "StringType (32 subcategories)", "Cleaned Spark Type": "StringType", "Transformation Detail": "Aliased as 'Sub-Category' for subcategory drilldowns"},
+        {"Target Feature": "Customer_Segment (Segment)", "Raw Representation": "StringType (Loyal/Premium/Returning/New)", "Cleaned Spark Type": "StringType", "Transformation Detail": "Aliased as 'Segment' for segment analysis"},
+        {"Target Feature": "Country (State)", "Raw Representation": "StringType (10 countries)", "Cleaned Spark Type": "StringType", "Transformation Detail": "Aliased as 'State' for geographic analysis"},
+        {"Target Feature": "Shipping_Method (Ship Mode)", "Raw Representation": "StringType (Express/Standard/Pickup/Same Day)", "Cleaned Spark Type": "StringType", "Transformation Detail": "Aliased as 'Ship Mode' for fulfillment analysis"},
+        {"Target Feature": "Delivery_Days (Days to Ship)", "Raw Representation": "IntegerType", "Cleaned Spark Type": "IntegerType", "Transformation Detail": "Aliased as 'Days to Ship'; actual delivery duration in days"},
+        {"Target Feature": "Order Year-Month", "Raw Representation": "Derived (New Feature)", "Cleaned Spark Type": "StringType", "Transformation Detail": "Formatted as YYYY-MM using Year + Month columns"},
+        {"Target Feature": "Order Month Name", "Raw Representation": "Derived (New Feature)", "Cleaned Spark Type": "StringType", "Transformation Detail": "3-letter month abbreviation mapped from Month integer"},
+        {"Target Feature": "Is Loss", "Raw Representation": "Derived (New Feature)", "Cleaned Spark Type": "BooleanType", "Transformation Detail": "Flag set to True where Profit_Amount < 0"}
     ]
     st.dataframe(pd.DataFrame(transform_log), use_container_width=True, hide_index=True)
 
@@ -134,7 +139,7 @@ def render_data_cleaning():
         st.download_button(
             label="📥 Download Cleaned CSV",
             data=csv_bytes,
-            file_name="sample_superstore_cleaned_spark.csv",
+            file_name="ecommerce_orders_cleaned_spark.csv",
             mime="text/csv",
             use_container_width=True
         )

@@ -106,7 +106,7 @@ def main():
                     ● Pre-loaded & Verified
                 </div>
                 <div style="color: #cbd5e1; word-break: break-all; font-family: monospace; font-size: 0.75rem;">
-                    data/sample_superstore.csv
+                    data/ecommerce_orders_dataset.csv
                 </div>
                 <div style="color: #94a3b8; font-size: 0.72rem; margin-top: 0.35rem;">
                     Rows: {len(df):,} | Attributes: {len(df.columns)}
@@ -165,7 +165,7 @@ def main():
         <div class="app-header-container">
             <h1 class="app-title">Retail Sales & Profitability Analysis Using Apache Spark</h1>
             <p class="app-subtitle">
-                Enterprise big data analytics engine processing pre-existing superstore transactions with distributed Spark transformations.
+                Enterprise big data analytics engine processing 2026 e-commerce orders with distributed Spark transformations.
             </p>
         </div>
         """,

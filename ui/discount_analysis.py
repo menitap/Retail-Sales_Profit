@@ -34,12 +34,13 @@ def render_discount_analysis(df):
     total_loss_amount = abs(loss_df["Profit"].sum())
     loss_order_count = len(loss_df)
     loss_order_rate = (loss_order_count / len(df)) * 100 if len(df) > 0 else 0
+    avg_disc_pct = df["Discount_Percent"].mean() if "Discount_Percent" in df.columns else df["Discount"].mean() * 100
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         render_kpi_card(
             title="Mean Enterprise Discount",
-            value=f"{df['Discount'].mean() * 100:.2f}%",
+            value=f"{avg_disc_pct:.2f}%",
             subtitle="Overall average discount",
             icon="🏷️",
             glow_color="blue"
@@ -73,11 +74,11 @@ def render_discount_analysis(df):
 
     # Key Strategic Warning
     render_insight_box(
-        title="Severe Margin Inversion at >20% Discount",
+        title="Discount Impact on E-Commerce Profit Margins",
         message=(
-            "Statistical analysis demonstrates an acute cliff: orders with 0-20% discounts generate a positive aggregate "
-            "margin (+28.2%), whereas orders discounted above 20% generate an alarming aggregate margin of -24.6%, "
-            "eroding hundreds of thousands of dollars in profit."
+            "Statistical analysis of the 2026 e-commerce dataset reveals that orders with Discount_Percent above 20% "
+            "show significantly compressed Profit_Margin_Percent values. Orders at 0% discount maintain healthy margins, "
+            "while orders above 30% discount frequently result in negative Profit_Amount values."
         ),
         icon="⚠️",
         border_color="#ef4444"
@@ -144,10 +145,11 @@ def render_discount_analysis(df):
     with sc_c1:
         cat_filter = st.selectbox(
             "Filter Category for Scatter Plot",
-            ["All Categories"] + sorted(list(df["Category"].unique()))
+            ["All Categories"] + sorted(list(df["Product_Category"].unique())) if "Product_Category" in df.columns
+            else ["All Categories"] + sorted(list(df["Category"].unique()))
         )
     with sc_c2:
-        st.caption("Each point represents a transaction line item. Notice how dots shift drastically into negative profit zones as discount moves past 0.20.")
+        st.caption("Each point represents a transaction. Notice how dots shift into negative profit zones as discount increases past 20%.")
 
     scatter_subset = df if cat_filter == "All Categories" else df[df["Category"] == cat_filter]
 
@@ -209,7 +211,7 @@ def render_discount_analysis(df):
     st.markdown(
         """
         1. **Institute Strict 20% Hard Ceiling**: Prohibit automated discount configurations from exceeding 20% without explicit regional manager review.
-        2. **Restructure Furniture & Tables Pricing**: Tables generated over -$17.7K in losses. Rather than discounting up to 40-50%, implement bundle promotions with high-margin Technology peripherals.
-        3. **Eliminate Deep Binders Discounts**: Binders frequently receive 70-80% discounts in Central and South regions, converting an otherwise profitable Office Supply category into steep losses.
+        2. **Target High-Discount Subcategories**: Subcategories with high Loss_Records and high Avg_Discount should be flagged for pricing review — excessive discounting converts profitable lines into loss-makers.
+        3. **Reward Loyal & Premium Segments Differently**: Instead of blanket percentage discounts, offer loyalty rewards, free shipping, or bundled products to Loyal and Premium customers to preserve margins while improving retention.
         """
     )

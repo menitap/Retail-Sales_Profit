@@ -61,10 +61,10 @@ def render_retail_logo_banner():
                 Executive Big Data Analytics & Profitability Engine powering automated insights across store departments, regional markets, and pricing channels.
             </div>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 6px;">🛒 4 Geographic Regions</span>
-                <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 6px;">📦 17 Merchandising Lines</span>
+                <span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 6px;">🛒 5 Warehouse Regions</span>
+                <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 6px;">📦 32 Product Subcategories</span>
                 <span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 6px;">⚡ PySpark In-Memory Engine</span>
-                <span style="background: rgba(15, 23, 42, 0.6); color: #cbd5e1; border: 1px solid #334155; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 6px;">💰 $2,297,200.86 Lifetime Sales</span>
+                <span style="background: rgba(15, 23, 42, 0.6); color: #cbd5e1; border: 1px solid #334155; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 6px;">💰 $11,370,044 Lifetime Revenue</span>
             </div>
         </div>
     </div>
@@ -91,25 +91,25 @@ def render_dashboard(df):
         col_f1, col_f2, col_f3 = st.columns(3)
 
         with col_f1:
-            years = ["All Years"] + sorted([str(y) for y in df["Order Year"].unique() if pd.notnull(y)])
+            years = ["All Years"] + sorted([str(y) for y in df["Year"].dropna().unique()])
             selected_year = st.selectbox("📅 Filter by Year", years, index=0)
 
         with col_f2:
-            regions = ["All Regions"] + sorted(list(df["Region"].unique()))
+            regions = ["All Regions"] + sorted(list(df["Warehouse_Region"].dropna().unique()))
             selected_region = st.selectbox("🌍 Filter by Region", regions, index=0)
 
         with col_f3:
-            categories = ["All Categories"] + sorted(list(df["Category"].unique()))
+            categories = ["All Categories"] + sorted(list(df["Product_Category"].dropna().unique()))
             selected_cat = st.selectbox("📦 Filter by Category", categories, index=0)
 
     # Apply filters dynamically
     filtered_df = df.copy()
     if selected_year != "All Years":
-        filtered_df = filtered_df[filtered_df["Order Year"] == int(selected_year)]
+        filtered_df = filtered_df[filtered_df["Year"] == int(selected_year)]
     if selected_region != "All Regions":
-        filtered_df = filtered_df[filtered_df["Region"] == selected_region]
+        filtered_df = filtered_df[filtered_df["Warehouse_Region"] == selected_region]
     if selected_cat != "All Categories":
-        filtered_df = filtered_df[filtered_df["Category"] == selected_cat]
+        filtered_df = filtered_df[filtered_df["Product_Category"] == selected_cat]
 
     if filtered_df.empty:
         st.warning("⚠️ No records match the selected filter combination. Reset filters to view data.")
@@ -154,19 +154,19 @@ def render_dashboard(df):
     with col4:
         render_kpi_card(
             title="Avg Discount",
-            value=f"{kpis['avg_discount']:.2f}%",
-            subtitle="Across product lines",
+            value=f"{kpis['avg_discount']:.1f}%",
+            subtitle="Across all product lines",
             icon="🏷️",
             glow_color="amber"
         )
 
     with col5:
         render_kpi_card(
-            title="Loss-Making Orders",
-            value=f"{kpis['loss_orders_pct']:.1f}%",
-            subtitle=f"${abs(kpis['total_loss']):,.0f} lost",
-            icon="⚠️",
-            glow_color="rose"
+            title="Avg Review Rating",
+            value=f"{kpis.get('avg_rating', 0):.2f} ⭐",
+            subtitle=f"Return Rate: {kpis.get('return_rate', 0):.1f}%",
+            icon="⭐",
+            glow_color="green"
         )
 
     st.markdown("<div style='margin-bottom: 1.5rem;'></div>", unsafe_allow_html=True)
@@ -177,28 +177,28 @@ def render_dashboard(df):
 
     with col_ins1:
         render_insight_box(
-            title="Technology Drives More Than 50% of Operating Profit",
-            message="Technology items maintain the healthiest margin at ~17.4% and generate over half of the enterprise profit ($145.5K) on 36.4% of total sales volume.",
-            icon="💻",
+            title="Electronics & Fashion Lead Revenue",
+            message="Electronics and Fashion categories generate the highest revenue in this 2026 e-commerce dataset. Electronics maintain strong margins backed by premium unit prices, while Fashion drives volume through mid-range pricing.",
+            icon="📱",
             border_color="#3b82f6"
         )
         render_insight_box(
-            title="Furniture Segment Experiences Severe Profit Erosion",
-            message="Despite commanding $742K in top-line sales, Furniture delivers an alarmingly slim 2.49% profit margin, largely driven by steep discounts on Tables (-$17.7K) and Bookcases (-$3.5K).",
-            icon="🪑",
+            title="Loyal & Premium Segments Drive Profitability",
+            message="Loyal and Premium customer segments account for a disproportionate share of total profit. These repeat buyers place higher average-value orders and demonstrate stronger brand attachment, reducing CAC.",
+            icon="👑",
             border_color="#f59e0b"
         )
 
     with col_ins2:
         render_insight_box(
-            title="Critical Discount Threshold Identified at 20%",
-            message="PySpark correlation analysis reveals transactions discounted >20% experience an average negative profit margin (-15.8%). Pricing policy should cap routine discounts at 20%.",
+            title="Discount Rate Correlates with Margin Erosion",
+            message="PySpark correlation analysis reveals transactions with Discount_Percent above 20% exhibit significantly compressed profit margins. Pricing policy should cap routine discounts at 20% to protect profitability.",
             icon="🎯",
             border_color="#ef4444"
         )
         render_insight_box(
-            title="Strong Q4 Holiday Seasonality Spikes",
-            message="Consistent year-over-year revenue peaks occur in November and December, representing 28.5% of annual revenue, driven by corporate restocking and holiday retail demand.",
+            title="Seasonal Revenue Peaks in Q4",
+            message="Consistent year-over-year revenue peaks occur in Q4 (Oct-Dec), driven by holiday shopping behaviour. Winter season shows the highest Order_Amount concentrations across all product categories.",
             icon="📅",
             border_color="#10b981"
         )
