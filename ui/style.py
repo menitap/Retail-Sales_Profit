@@ -188,7 +188,7 @@ def apply_custom_css():
     .section-header {
         font-size: 1.25rem;
         font-weight: 700;
-        color: #f1f5f9;
+        color: #1F2937;
         margin-top: 1.25rem;
         margin-bottom: 0.75rem;
         display: flex;
@@ -196,6 +196,10 @@ def apply_custom_css():
         gap: 0.5rem;
         border-bottom: 1px solid #334155;
         padding-bottom: 0.5rem;
+    }
+
+    .section-header span {
+        color: #1F2937;
     }
 
     /* Sidebar Customization */
@@ -228,6 +232,11 @@ def apply_custom_css():
         padding: 0.15rem 0.4rem !important;
         border-radius: 4px !important;
     }
+    /* Navigation radio text visibility */
+[data-testid="stSidebar"] .stRadio label,
+[data-testid="stSidebar"] .stRadio label p {
+    color: #FFFFFF !important;
+}
     </style>
     """
     st.markdown(custom_css, unsafe_allow_html=True)
