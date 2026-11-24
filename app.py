@@ -29,6 +29,7 @@ from ui.time_analysis import render_time_analysis
 from ui.performance import render_performance_evaluation
 from ui.what_if import render_what_if
 from ui.loss_dna import render_loss_dna
+from ui.loss_detection import render_loss_detection
 
 # Cached backend engine getter to prevent re-computation across page navigations
 @st.cache_resource(show_spinner=False)
@@ -77,7 +78,8 @@ def main():
             "📈 Time-Based Analysis",
             "⚡ Performance Evaluation",
             "What-If Simulator",
-            "Loss DNA: SHAP Explainability"
+            "Loss DNA: SHAP Explainability",
+            "🎯 Profitability Risk Detection"
         ]
 
         # Use session state to retain active page
@@ -195,6 +197,8 @@ def main():
         render_what_if(df)
     elif selected_page == "Loss DNA: SHAP Explainability":
         render_loss_dna(df)
+    elif selected_page == "🎯 Profitability Risk Detection":
+        render_loss_detection(df)
 
 if __name__ == "__main__":
     main()
