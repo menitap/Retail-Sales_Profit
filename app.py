@@ -27,6 +27,7 @@ from ui.visualizations import render_sales_analysis
 from ui.discount_analysis import render_discount_analysis
 from ui.time_analysis import render_time_analysis
 from ui.performance import render_performance_evaluation
+from ui.what_if import render_what_if
 
 # Cached backend engine getter to prevent re-computation across page navigations
 @st.cache_resource(show_spinner=False)
@@ -73,7 +74,8 @@ def main():
             "📊 Sales Analysis",
             "🏷️ Discount Analysis",
             "📈 Time-Based Analysis",
-            "⚡ Performance Evaluation"
+            "⚡ Performance Evaluation",
+            "What-If Simulator"
         ]
 
         # Use session state to retain active page
@@ -187,6 +189,8 @@ def main():
         render_time_analysis(df)
     elif selected_page == "⚡ Performance Evaluation":
         render_performance_evaluation()
+    elif selected_page == "What-If Simulator":
+        render_what_if(df)
 
 if __name__ == "__main__":
     main()
