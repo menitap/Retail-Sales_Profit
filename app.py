@@ -1,25 +1,27 @@
 """
-Retail Sales and Profitability Analysis Using Apache Spark
-Main Streamlit Application Entry Point.
+Retail Sales and Profitability Analysis — Main Entry Point.
+Green / Brown / Beige earthy professional theme.
+Top horizontal navigation, light/dark toggle, zero-scroll viewport.
 """
 
 import streamlit as st
-import time
 
-# Page configuration - must be first Streamlit command
 st.set_page_config(
-    page_title="Retail Sales & Profitability Analysis | Apache Spark",
-    page_icon="⚡",
+    page_title="Retail Sales & Profitability",
+    page_icon="🌿",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed",
 )
 
-# Apply UI Styling & CSS
+# Initialise theme before CSS injection
+if "theme_mode" not in st.session_state:
+    st.session_state.theme_mode = "dark"
+
 from ui.style import apply_custom_css
 apply_custom_css()
 
-# Import backend engine and analytics
 from backend import get_engine
+from ui.home import render_home
 from ui.dashboard import render_dashboard
 from ui.data_overview import render_data_overview
 from ui.data_cleaning import render_data_cleaning
@@ -27,178 +29,146 @@ from ui.visualizations import render_sales_analysis
 from ui.discount_analysis import render_discount_analysis
 from ui.time_analysis import render_time_analysis
 from ui.performance import render_performance_evaluation
-from ui.what_if import render_what_if
-from ui.loss_dna import render_loss_dna
 from ui.loss_detection import render_loss_detection
+from ui.loss_dna import render_loss_dna
+from ui.what_if import render_what_if
 
-# Cached backend engine getter to prevent re-computation across page navigations
+
 @st.cache_resource(show_spinner=False)
 def load_backend_data():
-    engine = get_engine()
-    return engine
+    return get_engine()
+
 
 def main():
-    # Initialize backend engine and data
-    with st.spinner("Connecting to Apache Spark backend and loading pre-existing dataset..."):
+    with st.spinner("Loading retail analytics engine…"):
         engine = load_backend_data()
-        df = engine.get_cleaned_data()
+        df     = engine.get_cleaned_data()
         status = engine.get_engine_status()
 
-    # Sidebar Navigation & Telemetry
-    with st.sidebar:
-        # App Branding Header
+    PAGES = [
+        "Home", "Dashboard", "Data Overview", "Data Cleaning",
+        "Sales Analysis", "Discount Analysis", "Time Trends",
+        "Performance", "Loss Detection", "Loss DNA", "What-If",
+    ]
+    LEGACY_MAP = {
+        "🏠 Dashboard Home": "Dashboard",
+        "📋 Data Overview": "Data Overview",
+        "🧹 Data Cleaning": "Data Cleaning",
+        "📊 Sales Analysis": "Sales Analysis",
+        "🏷️ Discount Analysis": "Discount Analysis",
+        "📈 Time-Based Analysis": "Time Trends",
+        "⚡ Performance Evaluation": "Performance",
+        "🎯 Profitability Risk Detection": "Loss Detection",
+        "Loss DNA: SHAP Explainability": "Loss DNA",
+        "What-If Simulator": "What-If",
+    }
+
+    if "current_page" not in st.session_state or st.session_state.current_page not in PAGES:
+        raw = st.session_state.get("current_page", "Home")
+        st.session_state.current_page = LEGACY_MAP.get(raw, "Home")
+
+    light = st.session_state.theme_mode == "light"
+
+    # ── Earthy theme token shortcuts for inline HTML ───────────────────────
+    if light:
+        brand_text   = "#2C1A0E"
+        brand_accent = "#3D7A5A"
+        sub_text     = "#7A6B58"
+        btn_bg       = "#EDE8DC"
+        btn_border   = "#C8BFA8"
+        btn_text_col = "#4A3728"
+        sb_title     = "#2C1A0E"
+        sb_sub       = "#3D7A5A"
+        sb_card_bg   = "#FDFAF4"
+        sb_card_brd  = "#C8BFA8"
+        sb_muted     = "#7A6B58"
+        sb_green     = "#3D7A5A"
+    else:
+        brand_text   = "#F0EBD8"
+        brand_accent = "#78C8A0"
+        sub_text     = "#8A9E82"
+        btn_bg       = "#1F2B1C"
+        btn_border   = "#354A30"
+        btn_text_col = "#D8D0BA"
+        sb_title     = "#F0EBD8"
+        sb_sub       = "#78C8A0"
+        sb_card_bg   = "#1F2B1C"
+        sb_card_brd  = "#354A30"
+        sb_muted     = "#8A9E82"
+        sb_green     = "#5C9E78"
+
+    # ── Top navigation bar: brand | nav pills | theme toggle ──────────────
+    nav_col1, nav_col2, nav_col3 = st.columns([0.38, 1.47, 0.15])
+
+    with nav_col1:
         st.markdown(
-            """
-            <div style="padding: 0.5rem 0 1rem 0;">
-                <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; letter-spacing: -0.02em;">
-                    ⚡ Retail Sales & Profit
-                </div>
-                <div style="font-size: 0.78rem; color: #60a5fa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
-                    Big Data Analytics • Apache Spark
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+            f"""<div style="display:flex;align-items:center;gap:0.4rem;height:34px;overflow:hidden;">
+<span style="font-size:0.95rem;font-weight:800;color:{brand_accent};white-space:nowrap;letter-spacing:-0.01em;">🌿 Retail Analytics</span>
+<span style="font-size:0.58rem;color:{sub_text};font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">Spark 4.3</span>
+</div>""",
+            unsafe_allow_html=True,
         )
 
-        st.markdown("---")
-
-        # Page Navigation
-        st.markdown(
-            "<div style='font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;'>Navigation</div>",
-            unsafe_allow_html=True
-        )
-
-        pages = [
-            "🏠 Dashboard Home",
-            "📋 Data Overview",
-            "🧹 Data Cleaning",
-            "📊 Sales Analysis",
-            "🏷️ Discount Analysis",
-            "📈 Time-Based Analysis",
-            "⚡ Performance Evaluation",
-            "What-If Simulator",
-            "Loss DNA: SHAP Explainability",
-            "🎯 Profitability Risk Detection"
-        ]
-
-        # Use session state to retain active page
-        if "current_page" not in st.session_state:
-            st.session_state.current_page = pages[0]
-
+    with nav_col2:
         selected_page = st.radio(
-            "Select Module",
-            pages,
-            index=pages.index(st.session_state.current_page) if st.session_state.current_page in pages else 0,
-            label_visibility="collapsed"
+            "nav", PAGES,
+            index=PAGES.index(st.session_state.current_page),
+            key="nav_selection",
+            horizontal=True,
+            label_visibility="collapsed",
         )
         st.session_state.current_page = selected_page
 
-        st.markdown("---")
-
-        # Pre-loaded Dataset Status (Strictly NO upload option)
-        st.markdown(
-            """
-            <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
-                Dataset Source
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        st.markdown(
-            f"""
-            <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 0.75rem; font-size: 0.8rem;">
-                <div style="color: #34d399; font-weight: 600; display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.25rem;">
-                    ● Pre-loaded & Verified
-                </div>
-                <div style="color: #cbd5e1; word-break: break-all; font-family: monospace; font-size: 0.75rem;">
-                    data/ecommerce_orders_dataset.csv
-                </div>
-                <div style="color: #94a3b8; font-size: 0.72rem; margin-top: 0.35rem;">
-                    Rows: {len(df):,} | Attributes: {len(df.columns)}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.markdown("---")
-
-        # Spark Backend Status Chip
-        st.markdown(
-            """
-            <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
-                Spark Backend Status
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        status_color = "#34d399" if status["is_pyspark_active"] else "#60a5fa"
-        st.markdown(
-            f"""
-            <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 0.75rem; font-size: 0.8rem;">
-                <div style="color: {status_color}; font-weight: 600; margin-bottom: 0.2rem;">
-                    ● {status['name']}
-                </div>
-                <div style="color: #94a3b8; font-size: 0.72rem; line-height: 1.3;">
-                    {status['details'][:80]}...
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.markdown("<div style='margin-bottom: 1rem;'></div>", unsafe_allow_html=True)
-
-        if st.button("🔄 Refresh Data Cache", use_container_width=True):
-            st.cache_resource.clear()
+    with nav_col3:
+        icon  = "☀️" if st.session_state.theme_mode == "dark" else "🌙"
+        label = "Light" if st.session_state.theme_mode == "dark" else "Dark"
+        if st.button(f"{icon} {label}", key="theme_toggle", use_container_width=True):
+            st.session_state.theme_mode = "light" if st.session_state.theme_mode == "dark" else "dark"
             st.rerun()
 
-        # Footer
+    # ── Sidebar ────────────────────────────────────────────────────────────
+    with st.sidebar:
         st.markdown(
-            """
-            <div style="font-size: 0.7rem; color: #64748b; text-align: center; margin-top: 2rem;">
-                Apache Spark 4.3 • Streamlit • Plotly<br>
-                Big Data Analytics Project
-            </div>
-            """,
-            unsafe_allow_html=True
+            f"""<div style="padding:0.3rem 0 0.6rem 0;">
+<div style="font-size:1.0rem;font-weight:800;color:{sb_title};">🌿 Retail Sales & Profit</div>
+<div style="font-size:0.7rem;color:{sb_sub};font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Analytics • Apache Spark</div>
+</div>""",
+            unsafe_allow_html=True,
         )
+        st.markdown(
+            f"""<div style="background:{sb_card_bg};border:1px solid {sb_card_brd};border-radius:8px;padding:0.6rem;font-size:0.74rem;margin-bottom:0.7rem;">
+<div style="color:{sb_green};font-weight:700;margin-bottom:0.2rem;">● Dataset Loaded</div>
+<div style="color:{sb_muted};font-family:monospace;font-size:0.68rem;">ecommerce_orders_dataset.csv</div>
+<div style="color:{sb_muted};font-size:0.68rem;margin-top:0.2rem;">Rows: {len(df):,} | Cols: {len(df.columns)}</div>
+</div>""",
+            unsafe_allow_html=True,
+        )
+        spark_color = sb_green if status.get("is_pyspark_active", False) else sb_sub
+        st.markdown(
+            f"""<div style="background:{sb_card_bg};border:1px solid {sb_card_brd};border-radius:8px;padding:0.6rem;font-size:0.74rem;margin-bottom:0.7rem;">
+<div style="color:{spark_color};font-weight:700;margin-bottom:0.2rem;">● {status.get('name','Backend')}</div>
+<div style="color:{sb_muted};font-size:0.68rem;line-height:1.3;">{str(status.get('details',''))[:80]}…</div>
+</div>""",
+            unsafe_allow_html=True,
+        )
+        if st.button("🔄 Refresh Cache", use_container_width=True):
+            st.cache_resource.clear()
+            st.cache_data.clear()
+            st.rerun()
 
-    # Main Application Header Container
-    st.markdown(
-        """
-        <div class="app-header-container">
-            <h1 class="app-title">Retail Sales & Profitability Analysis Using Apache Spark</h1>
-            <p class="app-subtitle">
-                Enterprise big data analytics engine processing 2026 e-commerce orders with distributed Spark transformations.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # ── Page routing ───────────────────────────────────────────────────────
+    if   selected_page == "Home":            render_home(df)
+    elif selected_page == "Dashboard":       render_dashboard(df)
+    elif selected_page == "Data Overview":   render_data_overview()
+    elif selected_page == "Data Cleaning":   render_data_cleaning()
+    elif selected_page == "Sales Analysis":  render_sales_analysis(df)
+    elif selected_page == "Discount Analysis": render_discount_analysis(df)
+    elif selected_page == "Time Trends":     render_time_analysis(df)
+    elif selected_page == "Performance":     render_performance_evaluation()
+    elif selected_page == "Loss Detection":  render_loss_detection(df)
+    elif selected_page == "Loss DNA":        render_loss_dna(df)
+    elif selected_page == "What-If":         render_what_if(df)
 
-    # Page Routing
-    if selected_page == "🏠 Dashboard Home":
-        render_dashboard(df)
-    elif selected_page == "📋 Data Overview":
-        render_data_overview()
-    elif selected_page == "🧹 Data Cleaning":
-        render_data_cleaning()
-    elif selected_page == "📊 Sales Analysis":
-        render_sales_analysis(df)
-    elif selected_page == "🏷️ Discount Analysis":
-        render_discount_analysis(df)
-    elif selected_page == "📈 Time-Based Analysis":
-        render_time_analysis(df)
-    elif selected_page == "⚡ Performance Evaluation":
-        render_performance_evaluation()
-    elif selected_page == "What-If Simulator":
-        render_what_if(df)
-    elif selected_page == "Loss DNA: SHAP Explainability":
-        render_loss_dna(df)
-    elif selected_page == "🎯 Profitability Risk Detection":
-        render_loss_detection(df)
 
 if __name__ == "__main__":
     main()

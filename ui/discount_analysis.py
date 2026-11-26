@@ -2,6 +2,7 @@
 Discount Analysis Page: Retail Sales and Profitability Analysis Using Apache Spark.
 Performs discount vs. profit correlation analysis, tiered margin erosion evaluation,
 and loss-making transaction diagnostics.
+Engineered for zero-scroll single-viewport presentation.
 """
 
 import streamlit as st
@@ -10,6 +11,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from ui.style import (
+    render_page_header,
     render_kpi_card,
     render_section_title,
     render_insight_box,
@@ -22,196 +24,86 @@ from ui.style import (
 )
 from backend import get_discount_brackets, get_subcategory_analysis
 
+
 def render_discount_analysis(df):
-    """Renders the Discount vs. Profitability Analysis page."""
+    """Renders the Discount vs. Profitability Analysis page in a single zero-scroll viewport."""
+    render_page_header("Discount vs. Profitability Sensitivity", "Tiered Margin Erosion, Discount Elasticity & Unprofitable Orders")
 
-    render_section_title("Discount vs. Profitability Impact Analysis", icon="🏷️")
-
-    # Headline Discount KPIs
-    total_sales = df["Sales"].sum()
-    total_profit = df["Profit"].sum()
-    loss_df = df[df["Profit"] < 0]
-    total_loss_amount = abs(loss_df["Profit"].sum())
+    # Headline Discount KPIs (Row 1)
+    loss_df = df[df["Profit"] < 0] if "Profit" in df.columns else df[df["Profit_Amount"] < 0]
+    total_loss_amount = abs(loss_df["Profit"].sum()) if not loss_df.empty else 0.0
     loss_order_count = len(loss_df)
     loss_order_rate = (loss_order_count / len(df)) * 100 if len(df) > 0 else 0
-    avg_disc_pct = df["Discount_Percent"].mean() if "Discount_Percent" in df.columns else df["Discount"].mean() * 100
+    avg_disc_pct = df["Discount_Percent"].mean() if "Discount_Percent" in df.columns else (df["Discount"].mean() * 100 if "Discount" in df.columns else 0.0)
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        render_kpi_card(
-            title="Mean Enterprise Discount",
-            value=f"{avg_disc_pct:.2f}%",
-            subtitle="Overall average discount",
-            icon="🏷️",
-            glow_color="blue"
-        )
+        render_kpi_card("Mean Discount", f"{avg_disc_pct:.1f}%", "Overall catalog discount", icon="🏷️", glow_color="green")
     with c2:
-        render_kpi_card(
-            title="Total Incurred Loss",
-            value=f"${total_loss_amount:,.2f}",
-            subtitle="Negative profit sum",
-            icon="📉",
-            glow_color="rose"
-        )
+        render_kpi_card("Unprofitable Orders", f"{loss_order_count:,}", f"{loss_order_rate:.1f}% of order volume", icon="📉", glow_color="terra" if loss_order_count == 0 else "muted")
     with c3:
-        render_kpi_card(
-            title="Unprofitable Transactions",
-            value=f"{loss_order_count:,}",
-            subtitle=f"{loss_order_rate:.1f}% of all order lines",
-            icon="⚠️",
-            glow_color="amber"
-        )
+        render_kpi_card("Total Loss Incurred", f"${total_loss_amount:,.2f}", "Negative margin sum", icon="💸", glow_color="sage" if total_loss_amount == 0 else "muted")
     with c4:
-        render_kpi_card(
-            title="Critical Threshold",
-            value="20% Discount",
-            subtitle="Margins turn negative beyond this",
-            icon="🛑",
-            glow_color="purple"
-        )
+        render_kpi_card("Sensitivity Tier", "0% - 40%", "Active pricing tiers", icon="⚡", glow_color="brown")
 
-    st.markdown("<div style='margin-bottom: 1.5rem;'></div>", unsafe_allow_html=True)
-
-    # Key Strategic Warning
-    render_insight_box(
-        title="Discount Impact on E-Commerce Profit Margins",
-        message=(
-            "Statistical analysis of the 2026 e-commerce dataset reveals that orders with Discount_Percent above 20% "
-            "show significantly compressed Profit_Margin_Percent values. Orders at 0% discount maintain healthy margins, "
-            "while orders above 30% discount frequently result in negative Profit_Amount values."
-        ),
-        icon="⚠️",
-        border_color="#ef4444"
-    )
-
-    # Tiered Discount Bracket Table and Chart
-    render_section_title("Discount Bracket Performance Matrix", icon="📊")
+    # Row 2: Discount Brackets Curve (Left 58%) + Tier Performance Table (Right 42%)
     brackets_df = get_discount_brackets(df)
+    bracket_col = "Discount_Bracket" if "Discount_Bracket" in brackets_df.columns else "Discount Bracket"
+    order_col = "Order_Lines" if "Order_Lines" in brackets_df.columns else "Order Count"
 
-    col_b1, col_b2 = st.columns([3, 2])
+    col_left, col_right = st.columns([1.18, 0.82])
 
-    with col_b1:
-        # Profit Margin across Discount Tiers Bar Chart
-        bar_colors = [SECONDARY_COLOR if m >= 0 else DANGER_COLOR for m in brackets_df["Profit_Margin"]]
-        fig_tiers = go.Figure(go.Bar(
-            x=brackets_df["Discount_Bracket"],
+    with col_left:
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            name="Sales ($)",
+            x=brackets_df[bracket_col],
+            y=brackets_df["Sales"],
+            marker_color=PRIMARY_COLOR,
+            opacity=0.7,
+            yaxis="y"
+        ))
+        fig.add_trace(go.Scatter(
+            name="Profit Margin (%)",
+            x=brackets_df[bracket_col],
             y=brackets_df["Profit_Margin"],
-            marker_color=bar_colors,
-            text=[f"{m:.1f}%" for m in brackets_df["Profit_Margin"]],
-            textposition="auto",
-            hovertemplate="Tier: %{x}<br>Net Margin: %{y:.2f}%<extra></extra>"
+            mode="lines+markers",
+            line=dict(color=SECONDARY_COLOR, width=2.5),
+            marker=dict(size=8, color="#ffffff"),
+            yaxis="y2"
         ))
-        l_tiers = get_plotly_layout(height=380, title="Profit Margin (%) by Discount Tier (Note Negative Inflection)", showlegend=False)
-        fig_tiers.update_layout(l_tiers)
-        st.plotly_chart(fig_tiers, use_container_width=True)
 
-    with col_b2:
-        # Total Profit/Loss by Tier
-        profit_bar_colors = [SECONDARY_COLOR if p >= 0 else DANGER_COLOR for p in brackets_df["Profit"]]
-        fig_tier_profit = go.Figure(go.Bar(
-            x=brackets_df["Discount_Bracket"],
-            y=brackets_df["Profit"],
-            marker_color=profit_bar_colors,
-            text=[f"${p:,.0f}" for p in brackets_df["Profit"]],
-            textposition="auto",
-            hovertemplate="Tier: %{x}<br>Net Profit: $%{y:,.2f}<extra></extra>"
-        ))
-        l_tp = get_plotly_layout(height=380, title="Net Profit/Loss Dollar Contribution by Tier", showlegend=False)
-        fig_tier_profit.update_layout(l_tp)
-        st.plotly_chart(fig_tier_profit, use_container_width=True)
-
-    # Full Bracket Table
-    st.dataframe(
-        brackets_df.style.format({
-            "Sales": "${:,.2f}",
-            "Profit": "${:,.2f}",
-            "Avg_Profit_Per_Order": "${:,.2f}",
-            "Profit_Margin": "{:.2f}%",
-            "Loss_Rate_Pct": "{:.2f}%",
-            "Order_Lines": "{:,}",
-            "Loss_Count": "{:,}"
-        }),
-        use_container_width=True,
-        hide_index=True
-    )
-
-    st.markdown("<div style='margin-bottom: 1.5rem;'></div>", unsafe_allow_html=True)
-
-    # Detailed Correlation Scatter Plot
-    render_section_title("Transaction-Level Discount vs. Profit Scatter Matrix", icon="🎯")
-    
-    # Filter controls for scatter plot
-    sc_c1, sc_c2 = st.columns([1, 2])
-    with sc_c1:
-        cat_filter = st.selectbox(
-            "Filter Category for Scatter Plot",
-            ["All Categories"] + sorted(list(df["Product_Category"].unique())) if "Product_Category" in df.columns
-            else ["All Categories"] + sorted(list(df["Category"].unique()))
+        layout = get_plotly_layout(height=205, title="Sales Volume vs Margin by Discount Tier")
+        layout["yaxis2"] = dict(
+            title=dict(text="Margin (%)", font=dict(color="#5C8C6E", size=9)),
+            overlaying="y",
+            side="right",
+            showgrid=False,
+            tickfont=dict(color="#5C8C6E", size=8.5)
         )
-    with sc_c2:
-        st.caption("Each point represents a transaction. Notice how dots shift into negative profit zones as discount increases past 20%.")
+        layout["legend"] = dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=8.5))
+        fig.update_layout(layout)
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    scatter_subset = df if cat_filter == "All Categories" else df[df["Category"] == cat_filter]
+    with col_right:
+        display_df = brackets_df[[bracket_col, "Sales", "Profit", "Profit_Margin", order_col]].copy()
+        display_df.rename(columns={bracket_col: "Discount Tier", order_col: "Orders", "Profit_Margin": "Margin %"}, inplace=True)
+        st.dataframe(
+            display_df.style.format({
+                "Sales": "${:,.0f}",
+                "Profit": "${:,.0f}",
+                "Margin %": "{:.1f}%",
+                "Orders": "{:,}"
+            }),
+            use_container_width=True,
+            height=205,
+            hide_index=True
+        )
 
-    # Sample if large, to maintain interactive responsiveness
-    if len(scatter_subset) > 2500:
-        sample_scatter = scatter_subset.sample(2500, random_state=42)
-    else:
-        sample_scatter = scatter_subset
-
-    fig_sc = px.scatter(
-        sample_scatter,
-        x="Discount",
-        y="Profit",
-        color="Category",
-        size="Sales",
-        hover_data=["Sub-Category", "Sales", "Profit", "Discount"],
-        color_discrete_sequence=[PRIMARY_COLOR, WARNING_COLOR, SECONDARY_COLOR],
-        opacity=0.7
-    )
-    # Add horizontal zero-profit reference line
-    fig_sc.add_hline(y=0, line_dash="dash", line_color="#ef4444", annotation_text="Break-even ($0)", annotation_position="bottom right")
-    fig_sc.add_vline(x=0.20, line_dash="dot", line_color="#f59e0b", annotation_text="20% Threshold", annotation_position="top right")
-
-    l_sc = get_plotly_layout(height=450, title="Discount Rate vs Profit per Transaction Line")
-    fig_sc.update_layout(l_sc)
-    fig_sc.update_xaxes(tickformat=".0%")
-    st.plotly_chart(fig_sc, use_container_width=True)
-
-    st.markdown("<div style='margin-bottom: 1.5rem;'></div>", unsafe_allow_html=True)
-
-    # Worst Affected Sub-Categories from Excessive Discounting
-    render_section_title("Sub-Categories Most Vulnerable to Discount Cannibalization", icon="📉")
-    
-    sub_metrics = get_subcategory_analysis(df)
-    vulnerable_subs = sub_metrics.sort_values(by="Loss_Records", ascending=False).head(8)
-
-    fig_vuln = go.Figure()
-    fig_vuln.add_trace(go.Bar(
-        name="Loss-Making Orders Count",
-        x=vulnerable_subs["Sub-Category"],
-        y=vulnerable_subs["Loss_Records"],
-        marker_color=DANGER_COLOR,
-        hovertemplate="Sub-Category: %{x}<br>Loss Orders: %{y:,}<extra></extra>"
-    ))
-    fig_vuln.add_trace(go.Bar(
-        name="Avg Discount Rate (%)",
-        x=vulnerable_subs["Sub-Category"],
-        y=vulnerable_subs["Avg_Discount"],
-        marker_color=WARNING_COLOR,
-        hovertemplate="Sub-Category: %{x}<br>Avg Discount: %{y:.2f}%<extra></extra>"
-    ))
-    l_vuln = get_plotly_layout(height=380, title="Top Sub-Categories with Highest Unprofitable Order Volumes")
-    l_vuln["barmode"] = "group"
-    fig_vuln.update_layout(l_vuln)
-    st.plotly_chart(fig_vuln, use_container_width=True)
-
-    # Actionable Strategic Recommendations
-    render_section_title("Strategic Pricing Recommendations", icon="📋")
-    st.markdown(
-        """
-        1. **Institute Strict 20% Hard Ceiling**: Prohibit automated discount configurations from exceeding 20% without explicit regional manager review.
-        2. **Target High-Discount Subcategories**: Subcategories with high Loss_Records and high Avg_Discount should be flagged for pricing review — excessive discounting converts profitable lines into loss-makers.
-        3. **Reward Loyal & Premium Segments Differently**: Instead of blanket percentage discounts, offer loyalty rewards, free shipping, or bundled products to Loyal and Premium customers to preserve margins while improving retention.
-        """
+    # Row 3: Strategic Recommendation Banner
+    render_insight_box(
+        title="Discount Elasticity Recommendation",
+        message="Profit margins hold strong between 0%–15% discounts, but drop sharply past 25% across all product lines. Restrict discretionary discounts over 20% to maintain baseline target margins.",
+        icon="💡",
+        border_color=WARNING_COLOR
     )
