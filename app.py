@@ -98,13 +98,13 @@ def main():
         sb_green     = "#5C9E78"
 
     # ── Top navigation bar: brand | nav pills | theme toggle ──────────────
-    nav_col1, nav_col2, nav_col3 = st.columns([0.38, 1.47, 0.15])
+    nav_col1, nav_col2, nav_col3 = st.columns([0.26, 1.60, 0.14], vertical_alignment="center")
 
     with nav_col1:
         st.markdown(
-            f"""<div style="display:flex;align-items:center;gap:0.4rem;height:34px;overflow:hidden;">
-<span style="font-size:0.95rem;font-weight:800;color:{brand_accent};white-space:nowrap;letter-spacing:-0.01em;">🌿 Retail Analytics</span>
-<span style="font-size:0.58rem;color:{sub_text};font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">Spark 4.3</span>
+            f"""<div style="display:flex;align-items:center;gap:0.35rem;height:34px;overflow:hidden;">
+<span style="font-size:0.92rem;font-weight:800;color:{brand_accent};white-space:nowrap;letter-spacing:-0.01em;">🌿 Retail Analytics</span>
+<span style="font-size:0.56rem;color:{sub_text};font-weight:600;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;">Spark 4.3</span>
 </div>""",
             unsafe_allow_html=True,
         )

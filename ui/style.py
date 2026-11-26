@@ -182,7 +182,7 @@ p, h1, h2, h3, h4, h5, h6 {{
    MAIN CONTAINER PADDING — tight to prevent page overflow
 ═══════════════════════════════════════════════════════════ */
 .block-container {{
-    padding-top: 0.15rem !important;
+    padding-top: 1.95rem !important;
     padding-bottom: 0.2rem !important;
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
@@ -192,7 +192,7 @@ p, h1, h2, h3, h4, h5, h6 {{
 /* ═══════════════════════════════════════════════════════════
    STREAMLIT HEADER & SIDEBAR TOGGLE
    Keep the header minimal and transparent; keep sidebar toggle
-   visible and functional.
+   visible and functional without blocking top nav clicks.
 ═══════════════════════════════════════════════════════════ */
 header[data-testid="stHeader"] {{
     background: transparent !important;
@@ -200,6 +200,7 @@ header[data-testid="stHeader"] {{
     min-height: 1.8rem !important;
     padding: 0 0.5rem !important;
     z-index: 99 !important;
+    pointer-events: none !important;
 }}
 [data-testid="stToolbar"] {{
     display: none !important;
@@ -208,6 +209,7 @@ header[data-testid="stHeader"] {{
     display: block !important;
     visibility: visible !important;
     color: {text_primary} !important;
+    pointer-events: auto !important;
 }}
 
 /* ═══════════════════════════════════════════════════════════
@@ -230,6 +232,11 @@ div[data-testid="stElementContainer"] {{
 /* ═══════════════════════════════════════════════════════════
    HORIZONTAL NAV — pill style
 ═══════════════════════════════════════════════════════════ */
+div[data-testid="stRadio"] {{
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+}}
 div[data-testid="stRadio"] > div[role="radiogroup"] {{
     display: flex !important;
     flex-direction: row !important;
@@ -238,14 +245,18 @@ div[data-testid="stRadio"] > div[role="radiogroup"] {{
     background: {nav_bg} !important;
     border: 1px solid {border_col} !important;
     border-radius: 6px !important;
-    padding: 0.1rem 0.15rem !important;
+    padding: 0.15rem 0.2rem !important;
     align-items: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
     overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: thin !important;
 }}
 div[data-testid="stRadio"] > div[role="radiogroup"] label {{
     background: transparent !important;
     border-radius: 5px !important;
-    padding: 0.16rem 0.5rem !important;
+    padding: 0.22rem 0.5rem !important;
     margin: 0 !important;
     cursor: pointer !important;
     transition: all 0.15s ease !important;
@@ -254,10 +265,27 @@ div[data-testid="stRadio"] > div[role="radiogroup"] label {{
     font-weight: 600 !important;
     border: none !important;
     white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    align-items: center !important;
+}}
+div[data-testid="stRadio"] > div[role="radiogroup"] label [data-testid="stMarkdownContainer"] {{
+    display: block !important;
+    visibility: visible !important;
+}}
+div[data-testid="stRadio"] > div[role="radiogroup"] label p {{
+    color: {nav_pill_text} !important;
+    font-size: 0.73rem !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
 }}
 div[data-testid="stRadio"] > div[role="radiogroup"] label:hover {{
     color: {nav_hover_text} !important;
     background: {nav_hover_bg} !important;
+}}
+div[data-testid="stRadio"] > div[role="radiogroup"] label:hover p {{
+    color: {nav_hover_text} !important;
 }}
 div[data-testid="stRadio"] > div[role="radiogroup"] label[data-checked="true"],
 div[data-testid="stRadio"] > div[role="radiogroup"] label:has(input:checked) {{
@@ -270,8 +298,8 @@ div[data-testid="stRadio"] > div[role="radiogroup"] label:has(input:checked) p {
     color: {nav_pill_act_text} !important;
     font-weight: 700 !important;
 }}
-/* Hide radio dots */
-div[data-testid="stRadio"] > div[role="radiogroup"] label div:first-child {{
+/* Hide only the radio circle (direct first child of label), never nested label text */
+div[data-testid="stRadio"] > div[role="radiogroup"] label > div:first-child {{
     display: none !important;
 }}
 
